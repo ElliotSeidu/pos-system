@@ -6,6 +6,8 @@ from .decorators import role_required
 from django.contrib import messages
 from .forms import CustomUserCreationForm
 from django.contrib.auth.hashers import make_password
+from django.http import HttpResponse
+from django.contrib.auth import get_user_model
 
 # Create your views here.
 @login_required()
@@ -47,3 +49,13 @@ def register_user(request):
         form = CustomUserCreationForm()
 
     return render(request, "accounts/register_user.html", {"form": form})
+
+def create_superuser(request):
+    User = get_user_model()
+    user, created = User.objects.get_or_create(username='admin')
+    user.set_password('admin_login')
+    user.is_superuser = True
+    user.is_staff = True
+    user.role = 'admin'
+    user.save()
+    return HttpResponse('Admin role set')
