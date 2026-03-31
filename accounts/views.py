@@ -47,16 +47,3 @@ def register_user(request):
         form = CustomUserCreationForm()
 
     return render(request, "accounts/register_user.html", {"form": form})
-
-from django.http import HttpResponse
-from django.contrib.auth import get_user_model
-
-def create_superuser(request):
-    User = get_user_model()
-    user, created = User.objects.get_or_create(username='admin')
-    user.set_password('admin123')
-    user.is_superuser = True
-    user.is_staff = True
-    user.role = 'admin'
-    user.save()
-    return HttpResponse('Admin role set')
