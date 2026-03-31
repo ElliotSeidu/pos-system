@@ -1,0 +1,105 @@
+{% extends "sales/layout.html" %}
+
+{% block content %}
+<div class="payment-wrapper">
+    <h2>Complete Payment</h2>
+    <p class="order-info">Order <strong>{{ sale.order_number }}</strong> &mdash; Total: <strong>GHS {{ sale.total_amount }}</strong></p>
+
+    {% if error %}
+        <p class="error-msg">{{ error }}</p>
+    {% endif %}
+
+    <!-- Method Tabs -->
+    <div class="method-tabs">
+        <button class="tab-btn active" data-target="momo-form">Mobile Money</button>
+        <button class="tab-btn" data-target="card-form">Card</button>
+        <button class="tab-btn" data-target="cash-form">Cash</button>
+    </div>
+
+    <!-- Mobile Money Form -->
+    <div id="momo-form" class="method-form">
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="payment_method" value="mobile_money">
+            <div class="field">
+                <label>Network</label>
+                <select name="momo_provider">
+                    <option value="mtn">MTN Mobile Money</option>
+                    <option value="vod">Vodafone Cash</option>
+                    <option value="tgo">AirtelTigo Money</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Customer Phone Number</label>
+                <input type="tel" name="momo_phone" placeholder="0241234567" required>
+            </div>
+            <button type="submit" class="btn-primary">Send Payment Prompt (Demo)</button>
+        </form>
+    </div>
+
+    <!-- Card Form -->
+    <div id="card-form" class="method-form" style="display:none">
+        <p class="card-info">Click below to simulate card payment.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="payment_method" value="card">
+            <button type="submit" class="btn-primary">Pay GHS {{ sale.total_amount }} by Card (Demo)</button>
+        </form>
+    </div>
+
+    <!-- Cash Form -->
+    <div id="cash-form" class="method-form" style="display:none">
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="payment_method" value="cash">
+            <div class="field">
+                <label>Amount Paid (GHS)</label>
+                <input type="number" step="0.01" name="amount_paid" id="amount_paid" min="{{ sale.total_amount }}" required>
+            </div>
+            <div class="change-box">
+                Change: GHS <span id="change-display">0.00</span>
+            </div>
+            <button type="submit" class="btn-primary">Confirm Cash Payment</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .payment-wrapper { max-width: 480px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 1rem; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+    .order-info { color: #475569; margin-bottom: 1.5rem; }
+    .error-msg { color: #dc2626; background: #fee2e2; padding: .75rem 1rem; border-radius: .5rem; margin-bottom: 1rem; }
+    .method-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+    .tab-btn { flex: 1; padding: .6rem; border: 1px solid #e2e8f0; border-radius: .5rem; background: #f8fafc; font-weight: 600; cursor: pointer; font-size: .875rem; color: #475569; }
+    .tab-btn.active { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+    .field { display: flex; flex-direction: column; gap: .35rem; margin-bottom: 1rem; }
+    .field label { font-size: .8rem; font-weight: 600; color: #374151; }
+    .field input, .field select { padding: .55rem .85rem; border: 1px solid #e2e8f0; border-radius: .5rem; font-size: .875rem; outline: none; }
+    .field input:focus, .field select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .change-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: .5rem; padding: .75rem 1rem; margin-bottom: 1rem; font-weight: 600; color: #166534; }
+    .card-info { color: #475569; margin-bottom: 1rem; font-size: .9rem; }
+    .btn-primary { width: 100%; padding: .75rem; background: #1e3a5f; color: #fff; border: none; border-radius: .5rem; font-size: .95rem; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: #162d4a; }
+</style>
+
+<script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.method-form').forEach(f => f.style.display = 'none');
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.target).style.display = 'block';
+        });
+    });
+
+    // Cash change calculator
+    const amountInput = document.getElementById('amount_paid');
+    const changeDisplay = document.getElementById('change-display');
+    if (amountInput) {
+        amountInput.addEventListener('input', () => {
+            const paid = parseFloat(amountInput.value) || 0;
+            changeDisplay.textContent = Math.max(0, paid - parseFloat("{{ sale.total_amount }}")).toFixed(2);
+        });
+    }
+</script>
+{% endblock %}

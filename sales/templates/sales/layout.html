@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales</title>
+</head>
+<body>
+
+    <nav class="topnav">
+        <a href="{% url 'index' %}" class="home-link">🏬 POS System</a>
+    </nav>
+
+    {% block content %}
+    {% endblock %}
+
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+        }
+
+        .topnav {
+            background-color: #1e3a5f;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .home-link {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .home-link:hover {
+            opacity: 0.8;
+        }
+    </style>
+</body>
+</html>

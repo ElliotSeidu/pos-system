@@ -1,0 +1,207 @@
+{% extends 'customers/layout.html' %}
+{% block content %}
+
+<section class="customers-section">
+    <div class="card">
+        <div class="card-header">
+            <h1>Customers</h1>
+            <a href="{% url 'add_customer' %}" class="btn-primary">+ Add Customer</a>
+        </div>
+
+        <form method="get" class="search-form">
+            <input type="text" name="q" placeholder="Search customers..." value="{{ query }}">
+        </form>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td class="actions">
+                            <a href="{% url 'edit_customer' customer.id %}" class="action-edit">Edit</a>
+                            <a href="{% url 'delete_customer' customer.id %}" class="action-delete">Delete</a>
+                            <a href="{% url 'customer_orders' customer.id %}" class="action-view">Orders</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="empty">No customers found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background-color: #f1f5f9;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #1e293b;
+    }
+
+    .customers-section {
+        padding: 2rem 1.5rem;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: #ffffff;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .btn-primary {
+        padding: 0.55rem 1.1rem;
+        background-color: #1e3a5f;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover {
+        background-color: #162d4a;
+    }
+
+    .search-form input {
+        width: 100%;
+        padding: 0.6rem 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        outline: none;
+        color: #1e293b;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-form input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    thead {
+        background-color: #1e3a5f;
+        color: white;
+    }
+
+    th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #374151;
+    }
+
+    tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-edit {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .action-edit:hover {
+        text-decoration: underline;
+    }
+
+    .action-delete {
+        color: #dc2626;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .action-delete:hover {
+        text-decoration: underline;
+    }
+
+    .action-view {
+        color: #16a34a;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .action-view:hover {
+        text-decoration: underline;
+    }
+
+    .empty {
+        text-align: center;
+        color: #94a3b8;
+        padding: 2rem;
+    }
+
+    @media (max-width: 600px) {
+        .card {
+            padding: 1.25rem;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+
+{% endblock %}

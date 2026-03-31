@@ -1,0 +1,519 @@
+{% extends "sales/layout.html" %}
+
+{% block content %}
+<section class="pos-section">
+
+    <!-- Products Panel -->
+    <div class="panel products-panel">
+        <div class="panel-header">
+            <h2>Products</h2>
+            <form method="get" action="">
+                <input type="text" id="barcode-input" name="q" placeholder="Scan barcode..." value="{{ query }}">
+            </form>
+            <a href="{% url 'dashboard' %}" class="dashboard-link">Dashboard</a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="product-grid">
+            {% for product in products %}
+                <div class="product-card" data-barcode="{{ product.barcode }}">
+                    <div class="product-info">
+                        <span class="product-name">{{ product.product_name }}</span>
+                        <span class="product-category">{{ product.category }}</span>
+                        <span class="product-stock">Stock: {{ product.quantity }}</span>
+                    </div>
+                    <div class="product-footer">
+                        <span class="product-price">${{ product.price }}</span>
+
+                        {% if product.quantity > 0 %}
+                            <a href="{% url 'add_to_cart' product.id %}" class="add-btn">+ Add</a>
+                        {% else %}
+                            <span class="out-stock">Out of Stock</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="empty-msg">No products found.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Cart Panel -->
+    <div class="panel cart-panel">
+        <div class="panel-header">
+            <h2>Cart</h2>
+        </div>
+
+        <div class="cart-items">
+            {% for item in cart_items %}
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <span class="cart-item-name">{{ item.product.product_name }}</span>
+                        <span class="cart-item-qty">x{{ item.quantity }}</span>
+                    </div>
+                    <div class="cart-item-right">
+                        <span class="cart-item-subtotal">${{ item.subtotal }}</span>
+                        <a href="{% url 'remove_from_cart' item.product.id %}" class="remove-btn">−</a>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="empty-msg">Cart is empty.</p>
+            {% endfor %}
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span class="total-amount">${{ total }}</span>
+            </div>
+
+            <form method="post" action="{% url 'complete_sale' %}">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="customer_id">Customer</label>
+                    <select name="customer_id" id="customer_id">
+                        <option value="" disabled selected>Select Customer</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.first_name }} {{ customer.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary {% if not cart_items %}disabled{% endif %}" {% if not cart_items %}disabled{% endif %}>
+                    Complete Sale
+                </button>
+            </form>
+        </div>
+    </div>
+
+</section>
+
+<style>
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: #f1f5f9;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #1e293b;
+    }
+
+    /* --- Dashboard Link --- */
+    .dashboard-link {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #2563eb;
+        text-decoration: none;
+        margin-left: 1rem;
+        white-space: nowrap;
+    }
+
+    .dashboard-link:hover {
+        text-decoration: underline;
+    }
+
+    /* --- Layout --- */
+    .pos-section {
+        display: grid;
+        grid-template-columns: 1fr 22rem;
+        gap: 1.5rem;
+        padding: 2rem;
+        min-height: 100vh;
+        align-items: flex-start;
+    }
+
+    /* --- Panel --- */
+    .panel {
+        background: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .panel-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        white-space: nowrap;
+    }
+
+    .panel-header form {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        min-width: 0;
+    }
+
+    .panel-header input[type="text"] {
+        padding: 0.45rem 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        outline: none;
+        color: #1e293b;
+        width: 100%;
+        max-width: 16rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .panel-header input[type="text"]:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* --- Product Grid --- */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+        gap: 1rem;
+        padding: 1.5rem;
+        overflow-y: auto;
+    }
+
+    .product-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.75rem;
+        transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .product-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: #bfdbfe;
+    }
+
+    .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .product-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .product-category {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    .product-stock {
+        font-size: 0.7rem;
+        color: #64748b;
+    }
+
+    .product-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .product-price {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e3a5f;
+    }
+
+    .add-btn {
+        padding: 0.25rem 0.65rem;
+        background-color: #1e3a5f;
+        color: white;
+        border-radius: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+
+    .add-btn:hover {
+        background-color: #162d4a;
+    }
+
+    .out-stock {
+        padding: 0.25rem 0.65rem;
+        background-color: #fee2e2;
+        color: #dc2626;
+        border-radius: 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* --- Cart Panel --- */
+    .cart-panel {
+        position: sticky;
+        top: 2rem;
+        max-height: calc(100vh - 4rem);
+    }
+
+    .cart-items {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.65rem 0.75rem;
+        background-color: #f8fafc;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .cart-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .cart-item-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .cart-item-qty {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+
+    .cart-item-right {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+    }
+
+    .cart-item-subtotal {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1e3a5f;
+    }
+
+    .remove-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.6rem;
+        height: 1.6rem;
+        background-color: #fee2e2;
+        color: #dc2626;
+        border-radius: 0.35rem;
+        font-size: 1rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background-color 0.2s;
+        line-height: 1;
+    }
+
+    .remove-btn:hover {
+        background-color: #fecaca;
+    }
+
+    /* --- Cart Footer --- */
+    .cart-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .cart-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .total-amount {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1e3a5f;
+    }
+
+    .cart-footer form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* --- Field --- */
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .field label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .field select {
+        width: 100%;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        outline: none;
+        color: #1e293b;
+        background-color: #fff;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* --- Button --- */
+    .btn-primary {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #1e3a5f;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: block;
+    }
+
+    .btn-primary:hover {
+        background-color: #162d4a;
+    }
+
+    .btn-primary.disabled,
+    .btn-primary:disabled {
+        background-color: #94a3b8;
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+
+    /* --- Misc --- */
+    .empty-msg {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        text-align: center;
+        padding: 1rem 0;
+    }
+
+    /* --- Media Queries --- */
+    @media (max-width: 1024px) {
+        .pos-section {
+            grid-template-columns: 1fr 18rem;
+            padding: 1.25rem;
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .pos-section {
+            grid-template-columns: 1fr;
+            padding: 1rem;
+        }
+
+        .cart-panel {
+            position: static;
+            max-height: none;
+        }
+
+        .cart-items {
+            max-height: 20rem;
+        }
+
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        .panel-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .panel-header form {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .panel-header input[type="text"] {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.getElementById("barcode-input");
+        input.focus();
+
+        input.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+
+                const barcode = input.value.trim();
+                if (!barcode) return;
+
+                const productCard = Array.from(document.querySelectorAll(".product-card")).find(card => {
+                    return card.dataset.barcode === barcode;
+                });
+
+                if (productCard) {
+                    const addBtn = productCard.querySelector(".add-btn");
+                    if (addBtn) addBtn.click();
+                } else {
+                    alert("Product not found or out of stock");
+                }
+
+                input.value = "";
+            }
+        });
+    });
+</script>
+{% endblock %}

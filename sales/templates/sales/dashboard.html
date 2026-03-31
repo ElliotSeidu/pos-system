@@ -1,0 +1,200 @@
+{% extends "sales/layout.html" %}
+
+{% block content %}
+    <section class="dashboard-section">
+
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <span class="subtitle">Today's overview</span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="card">
+                <span class="card-label">Total Sales Today</span>
+                <span class="card-value">${{ total_sales|floatformat:2 }}</span>
+            </div>
+
+            <div class="card">
+                <span class="card-label">Total Orders Today</span>
+                <span class="card-value">{{ total_orders }}</span>
+            </div>
+
+            <div class="card">
+                <span class="card-label">Quick Links</span>
+                <div class="quick-links">
+                    <a href="{% url 'daily_report' %}" class="quick-link">Daily Reports →</a>
+                    <a href="{% url 'product_list' %}" class="quick-link">Product Management →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="card-label">Top Products Today</span>
+            {% if top_products %}
+                <div class="top-products">
+                    {% for item in top_products %}
+                        <div class="product-row">
+                            <span class="product-rank">#{{ forloop.counter }}</span>
+                            <span class="product-name">{{ item.product__product_name }}</span>
+                            <span class="product-qty">{{ item.quantity_sold }} sold</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-msg">No products sold today.</p>
+            {% endif %}
+        </div>
+
+    </section>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #1e293b;
+        }
+
+        .dashboard-section {
+            width: 100%;
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            max-width: 64rem;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .card-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+
+        .quick-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .quick-link {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2563eb;
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            background-color: #eff6ff;
+            transition: background-color 0.2s;
+        }
+
+        .quick-link:hover {
+            background-color: #dbeafe;
+        }
+
+        .top-products {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .product-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+        }
+
+        .product-rank {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #94a3b8;
+            min-width: 1.5rem;
+        }
+
+        .product-name {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .product-qty {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #ffffff;
+            background-color: #1e3a5f;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+        }
+
+        .empty-msg {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-section {
+                padding: 1.5rem 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-value {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+{% endblock %}

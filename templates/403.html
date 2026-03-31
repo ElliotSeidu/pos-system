@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>403 – Access Forbidden</title>
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+    --navy:       #1e3a5f;
+    --navy-dark:  #152d4a;
+    --navy-light: #2a4f80;
+    --accent:     #f59e0b;
+    --accent-dim: #b45309;
+    --bg:         #f0f4f8;
+    --card-bg:    #ffffff;
+    --text:       #1e293b;
+    --muted:      #64748b;
+    --border:     #e2e8f0;
+    --font:       'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    }
+
+    .topbar {
+    background: var(--navy);
+    padding: 0 2rem; height: 56px;
+    display: flex; align-items: center; gap: .75rem;
+    }
+    .topbar-logo {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,.15); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo svg { width: 16px; height: 16px; fill: #fff; }
+    .topbar-name { font-size: .9rem; font-weight: 600; color: rgba(255,255,255,.9); letter-spacing: .02em; }
+
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+
+    .card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.07);
+    padding: 3rem 3.5rem; max-width: 520px; width: 100%;
+    text-align: center; animation: rise .4s ease both;
+    }
+    @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .error-badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: #fffbeb; color: var(--accent-dim);
+    border: 1px solid #fde68a; border-radius: 20px;
+    padding: .3rem .9rem; font-size: .78rem; font-weight: 600;
+    letter-spacing: .05em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    }
+    .error-badge svg { width: 13px; height: 13px; }
+
+    .lock-icon {
+    width: 64px; height: 64px;
+    background: #fffbeb; border: 1.5px solid #fde68a;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.25rem;
+    }
+    .lock-icon svg { width: 28px; height: 28px; color: var(--accent); }
+
+    .error-code { font-size: 6rem; font-weight: 800; line-height: 1; color: var(--navy); letter-spacing: -.04em; margin-bottom: .5rem; }
+    .divider { width: 40px; height: 3px; background: var(--accent); border-radius: 2px; margin: 1.25rem auto; }
+    .error-title { font-size: 1.35rem; font-weight: 600; margin-bottom: .75rem; }
+    .error-desc { font-size: .9rem; color: var(--muted); line-height: 1.6; margin-bottom: 2rem; }
+
+    .role-info {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;
+    padding: .85rem 1.25rem; margin-bottom: 2rem;
+    display: flex; align-items: center; gap: .65rem;
+    }
+    .role-info svg { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+    .role-info p { font-size: .82rem; color: var(--muted); }
+    .role-info strong { color: var(--text); }
+
+    .actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .6rem 1.4rem; border-radius: 7px;
+    font-size: .875rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    border: none; transition: all .18s;
+    }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: var(--navy-light); }
+    .btn-ghost { background: transparent; color: var(--navy); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--navy); background: #f8fafc; }
+    .btn svg { width: 15px; height: 15px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-logo">
+    <svg viewBox="0 0 24 24"><path d="M3 3h18v2H3zm0 8h18v2H3zm0 8h18v2H3z"/></svg>
+    </div>
+    <span class="topbar-name">POS System</span>
+</header>
+
+<main>
+    <div class="card">
+    <div class="error-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Access denied
+    </div>
+    <div class="error-code">403</div>
+    <div class="divider"></div>
+    <h1 class="error-title">You don't have permission to view this</h1>
+    <p class="error-desc">
+        This page is restricted to users with a higher access level.
+        Contact your system administrator if you believe this is a mistake.
+    </p>
+    <div class="role-info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <p>Logged in as <strong>{% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.username }}{% else %}Guest{% endif %}</strong>. Insufficient privileges for this resource.</p>
+    </div>
+    <div class="actions">
+        <a href="/" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Go to Dashboard
+        </a>
+        <a href="javascript:history.back()" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+        Go Back
+        </a>
+    </div>
+    </div>
+</main>
+
+</body>
+</html>

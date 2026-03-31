@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 – Page Not Found</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+        --navy:       #1e3a5f;
+        --navy-dark:  #152d4a;
+        --navy-light: #2a4f80;
+        --accent:     #3b82f6;
+        --accent-dim: #1d4ed8;
+        --bg:         #f0f4f8;
+        --card-bg:    #ffffff;
+        --text:       #1e293b;
+        --muted:      #64748b;
+        --border:     #e2e8f0;
+        --font:       'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        }
+
+        /* ── top bar ── */
+        .topbar {
+        background: var(--navy);
+        padding: 0 2rem;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        }
+        .topbar-logo {
+        width: 28px; height: 28px;
+        background: rgba(255,255,255,.15);
+        border-radius: 6px;
+        display: flex; align-items: center; justify-content: center;
+        }
+        .topbar-logo svg { width: 16px; height: 16px; fill: #fff; }
+        .topbar-name a{
+        font-size: .9rem; font-weight: 600;
+        color: rgba(255,255,255,.9);
+        letter-spacing: .02em;
+        text-decoration: none;
+        }
+
+        /* ── main ── */
+        main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        }
+
+        .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.07);
+        padding: 3rem 3.5rem;
+        max-width: 520px;
+        width: 100%;
+        text-align: center;
+        animation: rise .4s ease both;
+        }
+        @keyframes rise {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: #eff6ff;
+        color: var(--accent-dim);
+        border: 1px solid #bfdbfe;
+        border-radius: 20px;
+        padding: .3rem .9rem;
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        }
+        .error-badge svg { width: 13px; height: 13px; }
+
+        .error-code {
+        font-size: 6rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--navy);
+        letter-spacing: -.04em;
+        margin-bottom: .5rem;
+        }
+        .error-title {
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: .75rem;
+        }
+        .error-desc {
+        font-size: .9rem;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        }
+
+        .actions {
+        display: flex;
+        gap: .75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        }
+        .btn {
+        display: inline-flex; align-items: center; gap: .4rem;
+        padding: .6rem 1.4rem;
+        border-radius: 7px;
+        font-size: .875rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+        border: none; transition: all .18s;
+        }
+        .btn-primary {
+        background: var(--navy); color: #fff;
+        }
+        .btn-primary:hover { background: var(--navy-light); }
+        .btn-ghost {
+        background: transparent; color: var(--navy);
+        border: 1.5px solid var(--border);
+        }
+        .btn-ghost:hover { border-color: var(--navy); background: #f8fafc; }
+        .btn svg { width: 15px; height: 15px; }
+
+        .divider { width: 40px; height: 3px; background: var(--accent); border-radius: 2px; margin: 1.25rem auto; }
+    </style>
+    </head>
+    <body>
+
+    <header class="topbar">
+        <span class="topbar-name"><a href="{% url 'index' %}" class="home-link">🏬 POS System</a></span>
+    </header>
+
+    <main>
+        <div class="card">
+        <div class="error-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Page not found
+        </div>
+        <div class="error-code">404</div>
+        <div class="divider"></div>
+        <h1 class="error-title">We couldn't find that page</h1>
+        <p class="error-desc">
+            The page you're looking for may have been moved, renamed, or doesn't exist.
+            Double-check the URL or head back to the dashboard.
+        </p>
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            Go to Dashboard
+            </a>
+            <a href="javascript:history.back()" class="btn btn-ghost">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+            Go Back
+            </a>
+        </div>
+        </div>
+    </main>
+
+</body>
+</html>

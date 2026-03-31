@@ -1,0 +1,189 @@
+{% extends 'accounts/layout.html' %}
+
+{% block content %}
+    <section class="home-section">
+        <div class="card">
+
+            <div class="welcome-header">
+                <div class="brand-icon">🏬</div>
+                <h1>Welcome back, {{ user.username }}</h1>
+                <span class="subtitle">What would you like to manage today?</span>
+            </div>
+
+            {% if user.role == "admin" %}
+            <div style="display:flex; justify-content:center; margin-bottom:1rem;">
+                <a href="{% url 'register_user' %}"
+                style="padding:0.5rem 1rem; background-color:#0d6efd; color:white; text-decoration:none; border-radius:5px;">
+                + Register New User
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="nav-grid">
+                {% if user.role == "cashier" or user.role == "manager" or user.role == "admin" %}
+                <a href="{% url 'pos' %}" class="nav-card">
+                    <span class="nav-icon">🧾</span>
+                    <span class="nav-label">Sales</span>
+                </a>
+                {% endif %}
+
+                {% if user.role == "manager" or user.role == "admin" %}
+                <a href="{% url 'product_list' %}" class="nav-card">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-label">Products</span>
+                </a>
+
+                <a href="{% url 'customer_list' %}" class="nav-card">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">Customers</span>
+                </a>
+
+                <a href="{% url 'daily_report' %}" class="nav-card">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Reports</span>
+                </a>
+                {% endif %}
+
+
+            </div>
+
+            <div class="card-footer">
+                <a href="{% url 'logout' %}" class="btn-logout">Log Out</a>
+            </div>
+
+        </div>
+    </section>
+
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #1e293b;
+        }
+
+        .home-section {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 32rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .welcome-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            text-align: center;
+        }
+
+        .brand-icon {
+            font-size: 2rem;
+            background-color: #1e3a5f;
+            padding: 0.75rem 0.9rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.4rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .nav-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1.25rem 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            background-color: #f8fafc;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-card:hover {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+
+        .nav-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .card-footer {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-logout {
+            padding: 0.55rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            background-color: #f8fafc;
+            color: #dc2626;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.75rem 1.25rem;
+            }
+
+            .nav-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+{% endblock %}

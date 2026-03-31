@@ -1,0 +1,222 @@
+{% extends 'products/layout.html' %}
+
+{% block content %}
+    <section class="list-section">
+        <div class="card">
+            <div class="list-header">
+                <div>
+                    <h1>Product List</h1>
+                    <span class="subtitle">Manage your inventory</span>
+                </div>
+                <a href="{% url 'add_product' %}" class="btn-primary">+ Add Product</a>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Barcode</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                            <tr>
+                                <td>{{ product.product_name }}</td>
+                                <td><span class="badge">{{ product.category }}</span></td>
+                                <td>${{ product.price }}</td>
+                                <td>{{ product.quantity }}</td>
+                                <td class="barcode">{{ product.barcode }}</td>
+                                <td class="actions">
+                                    <a href="{% url 'edit_product' product.id %}" class="edit-btn">Edit</a>
+                                    <form method="POST" action="{% url 'delete_product' product.id %}">
+                                        {% csrf_token %}
+                                        <button class="delete-btn">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #1e293b;
+        }
+
+        .list-section {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 64rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .btn-primary {
+            padding: 0.6rem 1.25rem;
+            background-color: #1e3a5f;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            background-color: #162d4a;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 40rem;
+        }
+
+        thead {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .barcode {
+            font-family: monospace;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            padding: 0.3rem 0.75rem;
+            border-radius: 0.4rem;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .edit-btn {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .edit-btn:hover {
+            background-color: #dbeafe;
+        }
+
+        .delete-btn {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: none;
+        }
+
+        .delete-btn:hover {
+            background-color: #fee2e2;
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 1.25rem 1rem;
+            }
+
+            .list-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-primary {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+{% endblock %}

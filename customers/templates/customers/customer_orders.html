@@ -1,0 +1,148 @@
+{% extends "customers/layout.html" %}
+
+{% block content %}
+<section class="list-section">
+    <div class="card">
+        <div class="list-header">
+            <div>
+                <h1>{{ customer.first_name }} {{ customer.last_name }}</h1>
+                <span class="subtitle">Order history</span>
+            </div>
+            <a href="{% url 'customer_list' %}" class="btn-back">← Back</a>
+        </div>
+
+        {% if orders %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.order_number }}</td>
+                        <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% for item in order.items.all %}
+                                {{ item.product.product_name }} x{{ item.quantity }}<br>
+                            {% endfor %}
+                        </td>
+                        <td>${{ order.total_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="empty-msg">No orders found for this customer.</p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        background-color: #f1f5f9;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #1e293b;
+    }
+
+    .list-section {
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .card {
+        background: #ffffff;
+        border-radius: 1rem;
+        padding: 2rem;
+        width: 100%;
+        max-width: 56rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 1.75rem;
+    }
+
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .btn-back {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    .btn-back:hover { text-decoration: underline; }
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    thead {
+        background-color: #1e3a5f;
+        color: white;
+    }
+
+    th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        vertical-align: top;
+    }
+
+    tbody tr:hover { background-color: #f8fafc; }
+
+    .empty-msg {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        text-align: center;
+        padding: 1rem 0;
+    }
+
+    @media (max-width: 640px) {
+        .card { padding: 1.25rem 1rem; }
+    }
+</style>
+{% endblock %}
