@@ -53,7 +53,10 @@ from django.contrib.auth import get_user_model
 
 def create_superuser(request):
     User = get_user_model()
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
-        return HttpResponse('Superuser created')
-    return HttpResponse('Already exists')
+    user, created = User.objects.get_or_create(username='admin')
+    user.set_password('admin123')
+    user.is_superuser = True
+    user.is_staff = True
+    user.role = 'admin'
+    user.save()
+    return HttpResponse('Admin role set')
