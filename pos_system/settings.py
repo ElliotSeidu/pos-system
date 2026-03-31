@@ -145,3 +145,4 @@ LOGIN_URL = 'login'
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_TEST_MODE = config('PAYSTACK_TEST_MODE', default=True, cast=bool)
+CSRF_TRUSTED_ORIGINS = ['https://pos-system-80jl.onrender.com']
