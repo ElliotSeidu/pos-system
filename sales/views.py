@@ -22,24 +22,37 @@ from django.http import JsonResponse
 def generate_order_number():
     return "SALE-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
+
 def _deduct_stock(sale):
     for item in sale.items.all():
         product = item.product
         product.quantity -= item.quantity
         product.save()
 
+
 def initiate_momo_charge(email, amount_pesewas, phone, provider, reference):
     url = "https://api.paystack.co/charge"
-    headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
     payload = {
         "email": email,
         "amount": amount_pesewas,
         "currency": "GHS",
         "reference": reference,
-        "mobile_money": {"phone": phone, "provider": provider}
+        "mobile_money": {"phone": phone, "provider": provider},
     }
     response = requests.post(url, json=payload, headers=headers)
     return response.json()
+
+
+def verify_paystack_transaction(reference):
+    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
+    response = requests.get(url, headers=headers)
+    return response.json()
+
 
 # ------------------ POS / Cart ------------------
 
@@ -74,6 +87,7 @@ def pos(request):
         "query": query,
     })
 
+
 @login_required
 def add_to_cart(request, product_id):
     cart = request.session.get("cart", {})
@@ -89,6 +103,7 @@ def add_to_cart(request, product_id):
     request.session["cart"] = cart
     return redirect("pos")
 
+
 @login_required
 def remove_from_cart(request, product_id):
     cart = request.session.get("cart", {})
@@ -100,6 +115,7 @@ def remove_from_cart(request, product_id):
             del cart[key]
         request.session["cart"] = cart
     return redirect("pos")
+
 
 @login_required
 def complete_sale(request):
@@ -144,6 +160,7 @@ def complete_sale(request):
     request.session["cart"] = {}
     return redirect("payment", sale_id=sale.id)
 
+
 # ------------------ Payment Views ------------------
 
 @login_required
@@ -152,7 +169,11 @@ def payment_view(request, sale_id):
     if sale.is_paid:
         return redirect("receipt", sale_id=sale.id)
 
-    customer_email = sale.customer.email if sale.customer and sale.customer.email else request.user.email
+    customer_email = (
+        sale.customer.email
+        if sale.customer and sale.customer.email
+        else request.user.email
+    )
 
     if request.method == "POST":
         payment_method = request.POST.get("payment_method")
@@ -165,7 +186,7 @@ def payment_view(request, sale_id):
                     "sale": sale,
                     "error": "Amount paid is less than total.",
                     "paystack_public_key": settings.PAYSTACK_PUBLIC_KEY,
-                    "customer_email": customer_email
+                    "customer_email": customer_email,
                 })
             sale.amount_paid = amount_paid
             sale.change = amount_paid - sale.total_amount
@@ -181,27 +202,26 @@ def payment_view(request, sale_id):
             provider = request.POST.get("momo_provider", "mtn")
             reference = sale.order_number
 
-            # Demo mode — mark paid immediately
-            if getattr(settings, "PAYSTACK_TEST_MODE", False):
-                sale.payment_method = "mobile_money"
-                sale.payment_reference = reference
-                sale.amount_paid = sale.total_amount
-                sale.change = Decimal("0")
-                sale.is_paid = True
-                sale.save()
-                _deduct_stock(sale)
-                return redirect("receipt", sale_id=sale.id)
+            result = initiate_momo_charge(
+                customer_email,
+                int(sale.total_amount * 100),
+                phone,
+                provider,
+                reference,
+            )
 
-            # Real Paystack call
-            result = initiate_momo_charge(customer_email, int(sale.total_amount * 100), phone, provider, reference)
-            if result.get("status") and result["data"]["status"] in ("send_otp", "pay_offline", "pending"):
+            status = result.get("status")
+            data = result.get("data", {})
+            charge_status = data.get("status", "")
+
+            if status and charge_status in ("send_otp", "pay_offline", "pending"):
                 sale.payment_method = "mobile_money"
                 sale.payment_reference = reference
                 sale.save()
                 return render(request, "sales/payment_pending.html", {
                     "sale": sale,
                     "phone": phone,
-                    "message": "Awaiting customer confirmation..."
+                    "message": "A prompt has been sent to the customer's phone. Awaiting confirmation...",
                 })
             else:
                 error_msg = result.get("message", "Mobile money charge failed. Check the phone number and try again.")
@@ -209,28 +229,52 @@ def payment_view(request, sale_id):
                     "sale": sale,
                     "error": error_msg,
                     "paystack_public_key": settings.PAYSTACK_PUBLIC_KEY,
-                    "customer_email": customer_email
+                    "customer_email": customer_email,
                 })
 
         # ------------------ Card ------------------
         elif payment_method == "card":
             reference = request.POST.get("reference", "").strip()
 
-            # Demo mode — mark paid immediately
-            sale.payment_method = "card"
-            sale.payment_reference = reference or "TESTCARD-" + generate_order_number()
-            sale.amount_paid = sale.total_amount
-            sale.change = Decimal("0")
-            sale.is_paid = True
-            sale.save()
-            _deduct_stock(sale)
-            return redirect("receipt", sale_id=sale.id)
+            if not reference:
+                return render(request, "sales/payment.html", {
+                    "sale": sale,
+                    "error": "No payment reference received. Please complete the card payment popup.",
+                    "paystack_public_key": settings.PAYSTACK_PUBLIC_KEY,
+                    "customer_email": customer_email,
+                })
+
+            # Verify the reference with Paystack before marking paid
+            result = verify_paystack_transaction(reference)
+
+            if (
+                result.get("status")
+                and result["data"]["status"] == "success"
+                and result["data"]["amount"] == int(sale.total_amount * 100)
+            ):
+                sale.payment_method = "card"
+                sale.payment_reference = reference
+                sale.amount_paid = sale.total_amount
+                sale.change = Decimal("0")
+                sale.is_paid = True
+                sale.save()
+                _deduct_stock(sale)
+                return redirect("receipt", sale_id=sale.id)
+            else:
+                error_msg = result.get("message", "Card payment verification failed. Please try again.")
+                return render(request, "sales/payment.html", {
+                    "sale": sale,
+                    "error": error_msg,
+                    "paystack_public_key": settings.PAYSTACK_PUBLIC_KEY,
+                    "customer_email": customer_email,
+                })
 
     return render(request, "sales/payment.html", {
         "sale": sale,
         "paystack_public_key": settings.PAYSTACK_PUBLIC_KEY,
-        "customer_email": customer_email
+        "customer_email": customer_email,
     })
+
 
 # ------------------ Receipt & Reports ------------------
 
@@ -240,27 +284,31 @@ def receipt(request, sale_id):
     sale_items = SaleItem.objects.filter(sale=sale)
     return render(request, "sales/receipt.html", {"sale": sale, "sale_items": sale_items})
 
+
 @login_required
 def daily_report(request):
     report = (
         Sale.objects
-        .values('created_at__date')
-        .annotate(orders=Count('id'), total_sales=Sum('total_amount'))
-        .order_by('-created_at__date')
+        .values("created_at__date")
+        .annotate(orders=Count("id"), total_sales=Sum("total_amount"))
+        .order_by("-created_at__date")
     )
     return render(request, "sales/report.html", {"report": report})
+
 
 @login_required
 def dashboard(request):
     today = timezone.now().date()
-    total_sales = Sale.objects.filter(created_at__date=today).aggregate(total=Sum('total_amount'))['total'] or Decimal("0")
+    total_sales = Sale.objects.filter(created_at__date=today).aggregate(
+        total=Sum("total_amount")
+    )["total"] or Decimal("0")
     total_orders = Sale.objects.filter(created_at__date=today).count()
     top_products = (
         SaleItem.objects
         .filter(sale__created_at__date=today)
-        .values('product__product_name')
-        .annotate(quantity_sold=Sum('quantity'))
-        .order_by('-quantity_sold')[:5]
+        .values("product__product_name")
+        .annotate(quantity_sold=Sum("quantity"))
+        .order_by("-quantity_sold")[:5]
     )
     return render(request, "sales/dashboard.html", {
         "total_sales": total_sales,
@@ -269,6 +317,7 @@ def dashboard(request):
         "total_customers": Customer.objects.count(),
         "total_products": Product.objects.count(),
     })
+
 
 # ------------------ Webhook ------------------
 
@@ -279,19 +328,24 @@ def paystack_webhook(request):
 
     paystack_signature = request.headers.get("x-paystack-signature", "")
     body = request.body
-    expected = hmac.new(settings.PAYSTACK_SECRET_KEY.encode(), body, hashlib.sha512).hexdigest()
+    expected = hmac.new(
+        settings.PAYSTACK_SECRET_KEY.encode("utf-8"),
+        body,
+        hashlib.sha512,
+    ).hexdigest()
 
     if not hmac.compare_digest(expected, paystack_signature):
         return JsonResponse({"error": "Invalid signature"}, status=400)
 
     payload = json.loads(body)
+
     if payload.get("event") == "charge.success":
         reference = payload["data"]["reference"]
         try:
             sale = Sale.objects.get(payment_reference=reference)
             if not sale.is_paid:
                 sale.is_paid = True
-                sale.amount_paid = sale.total_amount
+                sale.amount_paid = Decimal(str(payload["data"]["amount"])) / 100
                 sale.change = Decimal("0")
                 sale.save()
                 _deduct_stock(sale)
@@ -300,20 +354,22 @@ def paystack_webhook(request):
 
     return JsonResponse({"status": "ok"}, status=200)
 
+
 # ------------------ Check Mobile Money Status ------------------
 
 @login_required
 def check_momo_status(request, sale_id):
     sale = get_object_or_404(Sale, id=sale_id)
+
     if sale.is_paid:
         return redirect("receipt", sale_id=sale.id)
+
     if not sale.payment_reference:
         messages.error(request, "No payment reference found for this sale.")
         return redirect("payment", sale_id=sale.id)
 
-    url = f"https://api.paystack.co/transaction/verify/{sale.payment_reference}"
-    headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
-    result = requests.get(url, headers=headers).json()
+    result = verify_paystack_transaction(sale.payment_reference)
+
     if result.get("status") and result["data"]["status"] == "success":
         sale.is_paid = True
         sale.amount_paid = sale.total_amount
@@ -321,8 +377,9 @@ def check_momo_status(request, sale_id):
         sale.save()
         _deduct_stock(sale)
         return redirect("receipt", sale_id=sale.id)
+
     return render(request, "sales/payment_pending.html", {
         "sale": sale,
         "phone": request.GET.get("phone", ""),
-        "message": "Waiting for customer approval..."
+        "message": "Still waiting for customer approval on their phone...",
     })
