@@ -5,58 +5,59 @@
     <h2>Complete Payment</h2>
     <p class="order-info">Order <strong>{{ sale.order_number }}</strong> &mdash; Total: <strong>GHS {{ sale.total_amount }}</strong></p>
 
-    {% if messages %}
-        {% for message in messages %}
-            <p class="error-msg">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-
     {% if error %}
-        <p class="error-msg">{{ error }}</p>
+        <p class="error-msg" role="alert">{{ error }}</p>
     {% endif %}
 
     <!-- Method Tabs -->
-    <div class="method-tabs">
-        <button class="tab-btn active" data-target="momo-form">Mobile Money</button>
-        <button class="tab-btn" data-target="card-form">Card</button>
-        <button class="tab-btn" data-target="cash-form">Cash</button>
+    <div class="method-tabs" role="tablist">
+        <button class="tab-btn active" role="tab" aria-selected="true" data-target="momo-form">Mobile Money</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-target="card-form">Card</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-target="cash-form">Cash</button>
     </div>
 
     <!-- Mobile Money Form -->
-    <div id="momo-form" class="method-form">
-        <form method="POST">
+    <div id="momo-form" class="method-form" role="tabpanel">
+        <form method="POST" novalidate>
             {% csrf_token %}
             <input type="hidden" name="payment_method" value="mobile_money">
             <div class="field">
-                <label>Network</label>
-                <select name="momo_provider">
+                <label for="momo_provider">Network</label>
+                <select name="momo_provider" id="momo_provider" required>
                     <option value="mtn">MTN Mobile Money</option>
                     <option value="vod">Vodafone Cash</option>
                     <option value="tgo">AirtelTigo Money</option>
                 </select>
             </div>
             <div class="field">
-                <label>Customer Phone Number</label>
-                <input type="tel" name="momo_phone" placeholder="e.g. 0241234567" required>
+                <label for="momo_phone">Customer Phone Number</label>
+                <input type="tel" name="momo_phone" id="momo_phone" placeholder="0241234567" 
+                    pattern="^0[2-5][0-9]{8}$" required>
             </div>
             <button type="submit" class="btn-primary">Send Payment Prompt</button>
         </form>
     </div>
 
     <!-- Card Form -->
-    <div id="card-form" class="method-form" style="display:none">
-        <p class="card-info">Click the button below to open the secure card payment popup.</p>
-        <button type="button" class="btn-primary" id="pay-card-btn">Pay GHS {{ sale.total_amount }} by Card</button>
+    <div id="card-form" class="method-form hidden" role="tabpanel">
+        <p class="card-info">The customer will be prompted to enter their card details securely via Paystack.</p>
+        <button type="button" class="btn-primary" id="pay-with-card">Pay GHS {{ sale.total_amount }} by Card</button>
+        <form method="POST" id="card-form-submit">
+            {% csrf_token %}
+            <input type="hidden" name="payment_method" value="card">
+            <input type="hidden" name="reference" id="card-reference">
+        </form>
     </div>
 
     <!-- Cash Form -->
-    <div id="cash-form" class="method-form" style="display:none">
-        <form method="POST">
+    <div id="cash-form" class="method-form hidden" role="tabpanel">
+        <form method="POST" novalidate>
             {% csrf_token %}
             <input type="hidden" name="payment_method" value="cash">
             <div class="field">
-                <label>Amount Paid (GHS)</label>
-                <input type="number" step="0.01" name="amount_paid" id="amount_paid" min="{{ sale.total_amount }}" required>
+                <label for="amount_paid">Amount Paid (GHS)</label>
+                <input type="number" step="0.01" name="amount_paid" id="amount_paid" 
+                       min="{{ sale.total_amount }}" required>
             </div>
             <div class="change-box">
                 Change: GHS <span id="change-display">0.00</span>
@@ -81,24 +82,22 @@
     .card-info { color: #475569; margin-bottom: 1rem; font-size: .9rem; }
     .btn-primary { width: 100%; padding: .75rem; background: #1e3a5f; color: #fff; border: none; border-radius: .5rem; font-size: .95rem; font-weight: 600; cursor: pointer; }
     .btn-primary:hover { background: #162d4a; }
+    .hidden { display: none; }
 </style>
 
-<!-- Paystack inline JS -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const SALE_TOTAL = parseFloat("{{ sale.total_amount }}");
-    const PAYSTACK_KEY = "{{ paystack_public_key }}";
-    const CUSTOMER_EMAIL = "{{ customer_email }}";
-    const ORDER_REF = "{{ sale.order_number }}-CARD-" + Date.now();
-
-    // Tab switching
+    // Tab switching with accessibility
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.method-form').forEach(f => f.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.method-form').forEach(f => f.classList.add('hidden'));
             btn.classList.add('active');
-            document.getElementById(btn.dataset.target).style.display = 'block';
+            btn.setAttribute('aria-selected', 'true');
+            document.getElementById(btn.dataset.target).classList.remove('hidden');
         });
     });
 
@@ -108,31 +107,29 @@ document.addEventListener("DOMContentLoaded", function () {
     if (amountInput) {
         amountInput.addEventListener('input', () => {
             const paid = parseFloat(amountInput.value) || 0;
-            changeDisplay.textContent = Math.max(0, paid - SALE_TOTAL).toFixed(2);
+            const total = parseFloat("{{ sale.total_amount }}");
+            changeDisplay.textContent = Math.max(0, paid - total).toFixed(2);
         });
     }
 
-    // Card payment via Paystack popup
-    const cardBtn = document.getElementById('pay-card-btn');
-    if (cardBtn) {
-        cardBtn.addEventListener('click', function () {
+    // Paystack card inline popup
+    const payBtn = document.getElementById('pay-with-card');
+    if (payBtn) {
+        payBtn.addEventListener('click', () => {
             const handler = PaystackPop.setup({
-                key: PAYSTACK_KEY,
-                email: CUSTOMER_EMAIL,
-                amount: SALE_TOTAL * 100,
-                currency: 'GHS',
-                ref: ORDER_REF,
-                onSuccess: function (transaction) {
-                    document.getElementById('card-reference').value = transaction.reference;
-                    document.getElementById('card-verify-form').submit();
-                },
-                onCancel: function () {
-                    alert('Payment cancelled.');
+                key: "{{ paystack_public_key }}",
+                email: "{{ customer_email }}",
+                amount: Math.round(parseFloat("{{ sale.total_amount }}") * 100),
+                currency: "GHS",
+                ref: "CARD-{{ sale.order_number }}",
+                onClose: () => alert('Payment cancelled.'),
+                callback: (response) => {
+                    document.getElementById('card-reference').value = response.reference;
+                    document.getElementById('card-form-submit').submit();
                 }
             });
             handler.openIframe();
         });
     }
-});
 </script>
 {% endblock %}

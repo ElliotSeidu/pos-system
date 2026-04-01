@@ -214,7 +214,31 @@ def payment_view(request, sale_id):
             data = result.get("data", {})
             charge_status = data.get("status", "")
 
-            if status and charge_status in ("send_otp", "pay_offline", "pending"):
+            # Immediate success
+            if status and charge_status == "success":
+                sale.payment_method = "mobile_money"
+                sale.payment_reference = reference
+                sale.amount_paid = sale.total_amount
+                sale.change = Decimal("0")
+                sale.is_paid = True
+                sale.save()
+                _deduct_stock(sale)
+                return redirect("receipt", sale_id=sale.id)
+
+            # OTP required
+            elif status and charge_status == "send_otp":
+                sale.payment_method = "mobile_money"
+                sale.payment_reference = reference
+                sale.save()
+                return render(request, "sales/payment_pending.html", {
+                    "sale": sale,
+                    "phone": phone,
+                    "message": "An OTP has been sent to the customer's phone. Enter it below to confirm payment.",
+                    "show_otp": True,
+                })
+
+            # Awaiting customer confirmation on phone
+            elif status and charge_status in ("pay_offline", "pending", "charge_attempted"):
                 sale.payment_method = "mobile_money"
                 sale.payment_reference = reference
                 sale.save()
@@ -222,7 +246,9 @@ def payment_view(request, sale_id):
                     "sale": sale,
                     "phone": phone,
                     "message": "A prompt has been sent to the customer's phone. Awaiting confirmation...",
+                    "show_otp": False,
                 })
+
             else:
                 error_msg = result.get("message", "Mobile money charge failed. Check the phone number and try again.")
                 return render(request, "sales/payment.html", {
@@ -244,7 +270,6 @@ def payment_view(request, sale_id):
                     "customer_email": customer_email,
                 })
 
-            # Verify the reference with Paystack before marking paid
             result = verify_paystack_transaction(reference)
 
             if (
@@ -274,6 +299,60 @@ def payment_view(request, sale_id):
         "paystack_public_key": settings.PAYSTACK_PUBLIC_KEY,
         "customer_email": customer_email,
     })
+
+
+# ------------------ OTP Submission ------------------
+
+@login_required
+def submit_momo_otp(request, sale_id):
+    sale = get_object_or_404(Sale, id=sale_id)
+
+    if sale.is_paid:
+        return redirect("receipt", sale_id=sale.id)
+
+    if request.method == "POST":
+        otp = request.POST.get("otp", "").strip()
+        reference = sale.payment_reference
+
+        url = "https://api.paystack.co/charge/submit_otp"
+        headers = {
+            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {"otp": otp, "reference": reference}
+        result = requests.post(url, json=payload, headers=headers).json()
+
+        data = result.get("data", {})
+        charge_status = data.get("status", "")
+
+        # Immediate success from OTP response
+        if charge_status == "success":
+            sale.is_paid = True
+            sale.amount_paid = sale.total_amount
+            sale.change = Decimal("0")
+            sale.save()
+            _deduct_stock(sale)
+            return redirect("receipt", sale_id=sale.id)
+
+        # Paystack said pending — verify directly to confirm
+        verify_result = verify_paystack_transaction(reference)
+        if verify_result.get("status") and verify_result["data"]["status"] == "success":
+            sale.is_paid = True
+            sale.amount_paid = sale.total_amount
+            sale.change = Decimal("0")
+            sale.save()
+            _deduct_stock(sale)
+            return redirect("receipt", sale_id=sale.id)
+
+        # Still not confirmed — show pending page with check status button
+        return render(request, "sales/payment_pending.html", {
+            "sale": sale,
+            "phone": "",
+            "message": result.get("message", "Payment is being processed. Click below to check status."),
+            "show_otp": False,
+        })
+
+    return redirect("payment", sale_id=sale.id)
 
 
 # ------------------ Receipt & Reports ------------------
@@ -382,4 +461,5 @@ def check_momo_status(request, sale_id):
         "sale": sale,
         "phone": request.GET.get("phone", ""),
         "message": "Still waiting for customer approval on their phone...",
+        "show_otp": False,
     })

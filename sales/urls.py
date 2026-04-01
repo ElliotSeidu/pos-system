@@ -11,5 +11,6 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('payment/<int:sale_id>/', views.payment_view, name="payment"),
     path('payment/<int:sale_id>/check-momo/', views.check_momo_status, name="check_momo_status"),
+    path('payment/<int:sale_id>/submit-otp/', views.submit_momo_otp, name="submit_momo_otp"),
     path('webhook/paystack/', views.paystack_webhook, name="paystack_webhook"),
 ]
